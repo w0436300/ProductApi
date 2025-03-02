@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>商品管理示例</title>
+    <!-- 引入 jQuery（示例使用 CDN，离线环境需自行下载 jquery.min.js） -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>商品管理示例</h1>
+
+    <!-- 按钮：加载所有商品 -->
+    <button id="btnLoadAll">加载所有商品</button>
+
+    <hr />
+
+    <!-- 显示商品列表 -->
+    <h2>商品列表</h2>
+    <table border="1" width="600" id="productTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>商品名称</th>
+                <th>价格</th>
+                <th>描述</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- jQuery 动态插入行 -->
+        </tbody>
+    </table>
+
+    <hr />
+
+    <!-- 添加新商品 -->
+    <h2>新增商品</h2>
+    <div>
+        <label>名称：</label>
+        <input type="text" id="txtName" />
+    </div>
+    <div>
+        <label>价格：</label>
+        <input type="number" id="txtPrice" />
+    </div>
+    <div>
+        <label>描述：</label>
+        <input type="text" id="txtDescription" />
+    </div>
+    <button id="btnAddProduct">新增</button>
+
+    <hr />
+
+    <!-- 编辑商品（展示到弹窗或隐藏表单，这里为简化放在此处） -->
+    <h2>编辑商品</h2>
+    <div>
+        <label>ID：</label>
+        <input type="text" id="editId" readonly />
+    </div>
+    <div>
+        <label>名称：</label>
+        <input type="text" id="editName" />
+    </div>
+    <div>
+        <label>价格：</label>
+        <input type="number" id="editPrice" />
+    </div>
+    <div>
+        <label>描述：</label>
+        <input type="text" id="editDescription" />
+    </div>
+    <button id="btnUpdateProduct">保存修改</button>
+
+    <script>
+        // 替换为实际后端地址(若同一站点可使用相对路径)
+        // 如果后端和前端在同一站点，则可用 '/api/products'
+        // 如果后端端口是 5000, 也可写成 'https://localhost:5000/api/products'
+        const apiUrl = '/api/products';
+
+        $(document).ready(function () {
+
+            // 1. 加载所有商品
+            $('#btnLoadAll').click(function () {
+                $.ajax({
+                    url: apiUrl,
+                    type: 'GET',
+                    success: function (data) {
+                        // 清空表格
+                        $('#productTable tbody').empty();
+
+                        // data 是一个 Product 数组
+                        $.each(data, function (index, product) {
+                            let row = '<tr>' +
+                                '<td>' + product.id + '</td>' +
+                                '<td>' + product.name + '</td>' +
+                                '<td>' + product.price + '</td>' +
+                                '<td>' + product.description + '</td>' +
+                                '<td>' +
+                                    '<button class="btnEdit" data-id="' + product.id + '">编辑</button> ' +
+                                    '<button class="btnDelete" data-id="' + product.id + '">删除</button>' +
+                                '</td>' +
+                            '</tr>';
+                            $('#productTable tbody').append(row);
+                        });
+                    },
+                    error: function (err) {
+                        alert("获取商品列表失败，请查看控制台");
+                        console.log(err);
+                    }
+                });
+            });
+
+            // 2. 新增商品
+            $('#btnAddProduct').click(function () {
+                // 读取输入框的值
+                let newProduct = {
+                    name: $('#txtName').val(),
+                    price: parseFloat($('#txtPrice').val()),
+                    description: $('#txtDescription').val()
+                };
+
+                $.ajax({
+                    url: apiUrl,
+                    type: 'POST',
+                    contentType: 'application/json; charset=utf-8',
+                    data: JSON.stringify(newProduct),
+                    success: function (data) {
+                        alert('新增成功! 新商品ID: ' + data.id);
+                        // 新增后，如果想直接刷新列表，可以调用加载按钮
+                        $('#btnLoadAll').click();
+                    },
+                    error: function (err) {
+                        alert("新增商品失败，请查看控制台");
+                        console.log(err);
+                    }
+                });
+            });
+
+            // 3. 点击“编辑”按钮，填充到编辑区域
+            // 因为“编辑”按钮是动态生成，所以需要用事件委托来绑定
+            $('#productTable').on('click', '.btnEdit', function () {
+                let productId = $(this).data('id');
+                // 先获取该商品信息
+                $.ajax({
+                    url: apiUrl + '/' + productId,
+                    type: 'GET',
+                    success: function (data) {
+                        // 填充到编辑表单
+                        $('#editId').val(data.id);
+                        $('#editName').val(data.name);
+                        $('#editPrice').val(data.price);
+                        $('#editDescription').val(data.description);
+                    },
+                    error: function (err) {
+                        alert("获取商品信息失败");
+                        console.log(err);
+                    }
+                });
+            });
+
+            // 4. 保存修改
+            $('#btnUpdateProduct').click(function () {
+                let productId = $('#editId').val();
+                if (!productId) {
+                    alert("请先选择要编辑的商品");
+                    return;
+                }
+                // 将编辑表单中的值拿到
+                let updatedProduct = {
+                    id: parseInt(productId),
+                    name: $('#editName').val(),
+                    price: parseFloat($('#editPrice').val()),
+                    description: $('#editDescription').val()
+                };
+                // 发起 PUT 请求
+                $.ajax({
+                    url: apiUrl + '/' + productId,
+                    type: 'PUT',
+                    contentType: 'application/json; charset=utf-8',
+                    data: JSON.stringify(updatedProduct),
+                    success: function () {
+                        alert("修改成功");
+                        // 修改后刷新列表
+                        $('#btnLoadAll').click();
+                    },
+                    error: function (err) {
+                        alert("修改失败");
+                        console.log(err);
+                    }
+                });
+            });
+
+            // 5. 删除商品
+            $('#productTable').on('click', '.btnDelete', function () {
+                let productId = $(this).data('id');
+                if (!confirm("确认删除 ID = " + productId + " 的商品吗？")) {
+                    return;
+                }
+                $.ajax({
+                    url: apiUrl + '/' + productId,
+                    type: 'DELETE',
+                    success: function () {
+                        alert("删除成功");
+                        $('#btnLoadAll').click();
+                    },
+                    error: function (err) {
+                        alert("删除失败");
+                        console.log(err);
+                    }
+                });
+            });
+
+        });
+    </script>
+</body>
+</html>
