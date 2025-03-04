@@ -1,8 +1,4 @@
-# Visual Studio cache / build folders
 .vs/
 bin/
 obj/
-# 其他忽略规则（示例）
-*.user
-*.suo
-*.userprefs
+/.vs

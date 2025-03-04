@@ -1,118 +1,340 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>商品管理示例</title>
-    <!-- 引入 jQuery（示例使用 CDN，离线环境需自行下载 jquery.min.js） -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Product Management Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom styles -->
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --light-color: #ecf0f1;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            color: var(--secondary-color);
+        }
+
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+            border: none;
+        }
+
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            font-weight: 600;
+            padding: 15px 20px;
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            border-color: var(--danger-color);
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+        }
+
+        .badge {
+            font-weight: 500;
+            padding: 5px 10px;
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #6c757d;
+        }
+
+        .price-column {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        #productTable tbody tr:hover {
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+    </style>
 </head>
 <body>
-    <h1>商品管理示例</h1>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white py-3 shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-box me-2"></i>Product Management
+            </a>
+        </div>
+    </nav>
 
-    <!-- 按钮：加载所有商品 -->
-    <button id="btnLoadAll">加载所有商品</button>
+    <div class="container my-4">
+        <div class="row">
+            <!-- Product List Section -->
+            <div class="col-lg-8 mb-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Product List</span>
+                        <button id="btnLoadAll" class="btn btn-primary btn-sm">
+                            <i class="fas fa-sync-alt me-1"></i>Refresh Data
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="productTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th scope="col">ID</th>
+                                        <th scope="col">Product Name</th>
+                                        <th scope="col">Price</th>
+                                        <th scope="col">Description</th>
+                                        <th scope="col">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Empty state - will be hidden when products are loaded -->
+                                    <tr id="emptyState">
+                                        <td colspan="5" class="empty-state">
+                                            <i class="fas fa-box-open fs-3 mb-3 d-block"></i>
+                                            <p>No products loaded. Click "Refresh Data" to load products.</p>
+                                        </td>
+                                    </tr>
+                                    <!-- jQuery will dynamically insert rows here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-    <hr />
+            <!-- Forms Section -->
+            <div class="col-lg-4">
+                <!-- Add Product Form -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-plus-circle me-2"></i>Add New Product
+                    </div>
+                    <div class="card-body">
+                        <form id="addProductForm">
+                            <div class="mb-3">
+                                <label for="txtName" class="form-label">Product Name</label>
+                                <input type="text" class="form-control" id="txtName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="txtPrice" class="form-label">Price</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" step="0.01" class="form-control" id="txtPrice" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="txtDescription" class="form-label">Description</label>
+                                <textarea class="form-control" id="txtDescription" rows="2"></textarea>
+                            </div>
+                            <button type="button" id="btnAddProduct" class="btn btn-success w-100">
+                                <i class="fas fa-plus me-1"></i>Add Product
+                            </button>
+                        </form>
+                    </div>
+                </div>
 
-    <!-- 显示商品列表 -->
-    <h2>商品列表</h2>
-    <table border="1" width="600" id="productTable">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>商品名称</th>
-                <th>价格</th>
-                <th>描述</th>
-                <th>操作</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- jQuery 动态插入行 -->
-        </tbody>
-    </table>
+                <!-- Edit Product Form -->
+                <div class="card" id="editProductCard">
+                    <div class="card-header">
+                        <i class="fas fa-edit me-2"></i>Edit Product
+                    </div>
+                    <div class="card-body">
+                        <form id="editProductForm">
+                            <div class="mb-3">
+                                <label for="editId" class="form-label">Product ID</label>
+                                <input type="text" class="form-control-plaintext" id="editId" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editName" class="form-label">Product Name</label>
+                                <input type="text" class="form-control" id="editName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editPrice" class="form-label">Price</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" step="0.01" class="form-control" id="editPrice" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editDescription" class="form-label">Description</label>
+                                <textarea class="form-control" id="editDescription" rows="2"></textarea>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <button type="button" id="btnUpdateProduct" class="btn btn-primary">
+                                    <i class="fas fa-save me-1"></i>Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <hr />
+    <!-- Toast notifications -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+        <div id="successToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <span id="successMessage">Operation successful!</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+        <div id="errorToast" class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <span id="errorMessage">An error occurred.</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
 
-    <!-- 添加新商品 -->
-    <h2>新增商品</h2>
-    <div>
-        <label>名称：</label>
-        <input type="text" id="txtName" />
+    <!-- Confirmation Modal -->
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteConfirmModalLabel">Confirm Deletion</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete product with ID: <span id="deleteProductId"></span>?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+                </div>
+            </div>
+        </div>
     </div>
-    <div>
-        <label>价格：</label>
-        <input type="number" id="txtPrice" />
-    </div>
-    <div>
-        <label>描述：</label>
-        <input type="text" id="txtDescription" />
-    </div>
-    <button id="btnAddProduct">新增</button>
 
-    <hr />
-
-    <!-- 编辑商品（展示到弹窗或隐藏表单，这里为简化放在此处） -->
-    <h2>编辑商品</h2>
-    <div>
-        <label>ID：</label>
-        <input type="text" id="editId" readonly />
-    </div>
-    <div>
-        <label>名称：</label>
-        <input type="text" id="editName" />
-    </div>
-    <div>
-        <label>价格：</label>
-        <input type="number" id="editPrice" />
-    </div>
-    <div>
-        <label>描述：</label>
-        <input type="text" id="editDescription" />
-    </div>
-    <button id="btnUpdateProduct">保存修改</button>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // 替换为实际后端地址(若同一站点可使用相对路径)
-        // 如果后端和前端在同一站点，则可用 '/api/products'
-        // 如果后端端口是 5000, 也可写成 'https://localhost:5000/api/products'
+        // API URL - replace with actual backend address
+        // If backend and frontend are on the same site, use '/api/products'
+        // If backend is on port 5000, use 'https://localhost:5000/api/products'
         const apiUrl = '/api/products';
 
-        $(document).ready(function () {
+        // Toast components
+        let successToast, errorToast;
 
-            // 1. 加载所有商品
+        $(document).ready(function () {
+            // Initialize Bootstrap components
+            successToast = new bootstrap.Toast(document.getElementById('successToast'));
+            errorToast = new bootstrap.Toast(document.getElementById('errorToast'));
+
+            // Load products on page load
+            $('#btnLoadAll').click();
+
+            // 1. Load all products
             $('#btnLoadAll').click(function () {
                 $.ajax({
                     url: apiUrl,
                     type: 'GET',
                     success: function (data) {
-                        // 清空表格
+                        // Clear table
                         $('#productTable tbody').empty();
 
-                        // data 是一个 Product 数组
-                        $.each(data, function (index, product) {
-                            let row = '<tr>' +
-                                '<td>' + product.id + '</td>' +
-                                '<td>' + product.name + '</td>' +
-                                '<td>' + product.price + '</td>' +
-                                '<td>' + product.description + '</td>' +
-                                '<td>' +
-                                    '<button class="btnEdit" data-id="' + product.id + '">编辑</button> ' +
-                                    '<button class="btnDelete" data-id="' + product.id + '">删除</button>' +
-                                '</td>' +
-                            '</tr>';
-                            $('#productTable tbody').append(row);
-                        });
+                        if (data.length === 0) {
+                            // Show empty state if no products
+                            $('#productTable tbody').html(`
+                                    <tr>
+                                        <td colspan="5" class="empty-state">
+                                            <i class="fas fa-box-open fs-3 mb-3 d-block"></i>
+                                            <p>No products found. Add a new product to get started.</p>
+                                        </td>
+                                    </tr>
+                                `);
+                        } else {
+                            // Populate table with product data
+                            $.each(data, function (index, product) {
+                                let row = `
+                                        <tr>
+                                            <td>${product.id}</td>
+                                            <td>${product.name}</td>
+                                            <td class="price-column">$${parseFloat(product.price).toFixed(2)}</td>
+                                            <td>${product.description || '-'}</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-primary btnEdit me-1" data-id="${product.id}">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-danger btnDelete" data-id="${product.id}">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    `;
+                                $('#productTable tbody').append(row);
+                            });
+                        }
+
+                        showSuccessToast('Products loaded successfully');
                     },
                     error: function (err) {
-                        alert("获取商品列表失败，请查看控制台");
+                        showErrorToast('Failed to load products. Please check the console.');
                         console.log(err);
                     }
                 });
             });
 
-            // 2. 新增商品
+            // 2. Add product
             $('#btnAddProduct').click(function () {
-                // 读取输入框的值
+                // Validate form
+                if (!$('#txtName').val() || !$('#txtPrice').val()) {
+                    showErrorToast('Please fill in all required fields');
+                    return;
+                }
+
+                // Read input values
                 let newProduct = {
                     name: $('#txtName').val(),
                     price: parseFloat($('#txtPrice').val()),
@@ -125,91 +347,132 @@
                     contentType: 'application/json; charset=utf-8',
                     data: JSON.stringify(newProduct),
                     success: function (data) {
-                        alert('新增成功! 新商品ID: ' + data.id);
-                        // 新增后，如果想直接刷新列表，可以调用加载按钮
+                        showSuccessToast('Product added successfully! ID: ' + data.id);
+
+                        // Clear form
+                        $('#txtName').val('');
+                        $('#txtPrice').val('');
+                        $('#txtDescription').val('');
+
+                        // Refresh product list
                         $('#btnLoadAll').click();
                     },
                     error: function (err) {
-                        alert("新增商品失败，请查看控制台");
+                        showErrorToast('Failed to add product. Please check the console.');
                         console.log(err);
                     }
                 });
             });
 
-            // 3. 点击“编辑”按钮，填充到编辑区域
-            // 因为“编辑”按钮是动态生成，所以需要用事件委托来绑定
+            // 3. Load product for editing
             $('#productTable').on('click', '.btnEdit', function () {
                 let productId = $(this).data('id');
-                // 先获取该商品信息
+
                 $.ajax({
                     url: apiUrl + '/' + productId,
                     type: 'GET',
                     success: function (data) {
-                        // 填充到编辑表单
+                        // Fill edit form
                         $('#editId').val(data.id);
                         $('#editName').val(data.name);
                         $('#editPrice').val(data.price);
                         $('#editDescription').val(data.description);
+
+                        // Scroll to edit form on mobile
+                        if (window.innerWidth < 992) {
+                            $('html, body').animate({
+                                scrollTop: $("#editProductCard").offset().top - 20
+                            }, 500);
+                        }
                     },
                     error: function (err) {
-                        alert("获取商品信息失败");
+                        showErrorToast('Failed to load product details');
                         console.log(err);
                     }
                 });
             });
 
-            // 4. 保存修改
+            // 4. Update product
             $('#btnUpdateProduct').click(function () {
                 let productId = $('#editId').val();
+
                 if (!productId) {
-                    alert("请先选择要编辑的商品");
+                    showErrorToast('Please select a product to edit first');
                     return;
                 }
-                // 将编辑表单中的值拿到
+
+                if (!$('#editName').val() || !$('#editPrice').val()) {
+                    showErrorToast('Please fill in all required fields');
+                    return;
+                }
+
                 let updatedProduct = {
                     id: parseInt(productId),
                     name: $('#editName').val(),
                     price: parseFloat($('#editPrice').val()),
                     description: $('#editDescription').val()
                 };
-                // 发起 PUT 请求
+
                 $.ajax({
                     url: apiUrl + '/' + productId,
                     type: 'PUT',
                     contentType: 'application/json; charset=utf-8',
                     data: JSON.stringify(updatedProduct),
                     success: function () {
-                        alert("修改成功");
-                        // 修改后刷新列表
+                        showSuccessToast('Product updated successfully');
+
+                        // Refresh product list
                         $('#btnLoadAll').click();
                     },
                     error: function (err) {
-                        alert("修改失败");
+                        showErrorToast('Failed to update product');
                         console.log(err);
                     }
                 });
             });
 
-            // 5. 删除商品
+            // 5. Delete product with modal confirmation
             $('#productTable').on('click', '.btnDelete', function () {
                 let productId = $(this).data('id');
-                if (!confirm("确认删除 ID = " + productId + " 的商品吗？")) {
-                    return;
-                }
+                $('#deleteProductId').text(productId);
+
+                // Show confirmation modal
+                let deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+                deleteModal.show();
+
+                // Set up confirm button
+                $('#confirmDeleteBtn').off('click').on('click', function () {
+                    deleteProduct(productId);
+                    deleteModal.hide();
+                });
+            });
+
+            // Helper function to delete product
+            function deleteProduct(productId) {
                 $.ajax({
                     url: apiUrl + '/' + productId,
                     type: 'DELETE',
                     success: function () {
-                        alert("删除成功");
+                        showSuccessToast('Product deleted successfully');
                         $('#btnLoadAll').click();
                     },
                     error: function (err) {
-                        alert("删除失败");
+                        showErrorToast('Failed to delete product');
                         console.log(err);
                     }
                 });
-            });
+            }
 
+            // Helper functions for toast notifications
+            function showSuccessToast(message) {
+                $('#successMessage').text(message);
+                successToast.show();
+            }
+
+            function showErrorToast(message) {
+                $('#errorMessage').text(message);
+                errorToast.show();
+            }
         });
     </script>
 </body>
